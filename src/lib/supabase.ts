@@ -110,6 +110,23 @@ export const getEvent = async (eventId: string): Promise<Event | null> => {
   return data;
 };
 
+// Buscar evento ativo (para Fila ao Vivo quando não há eventId na URL)
+export const getActiveEvent = async (): Promise<Event | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'active')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error('Erro ao buscar evento ativo:', error);
+    return null;
+  }
+  return data;
+};
+
 // Atualizar status do evento
 export const updateEventStatus = async (
   eventId: string, 
