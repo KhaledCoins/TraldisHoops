@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { LiveQueue } from '../components/LiveQueue';
-import { Calendar, MapPin, Users, Clock, AlertCircle, CheckCircle2, Settings } from 'lucide-react';
+import { Modal } from '../components/Modal';
+import { QRCodeGenerator } from '../components/QRCodeGenerator';
+import { Calendar, MapPin, Users, Clock, AlertCircle, CheckCircle2, Settings, QrCode } from 'lucide-react';
 import eventImage from 'figma:asset/a23cc00b238b423d14e83ad1b9b9728017127f40.png';
 
 interface EventoProps {
@@ -11,6 +12,7 @@ interface EventoProps {
 }
 
 export function Evento({ eventId, onNavigate }: EventoProps) {
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const EVENT_ID_TARDEZINHA = 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
   const EVENT_ID_NATAL = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
   const EVENT_ID_INAUGURAL = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -214,13 +216,21 @@ export function Evento({ eventId, onNavigate }: EventoProps) {
         <div className="text-center">
           {event.status === 'active' && (
             <div className="space-y-4">
-              <div className="flex flex-col md:flex-row gap-3 justify-center">
+              <div className="flex flex-col md:flex-row gap-3 justify-center flex-wrap">
                 <Button 
                   variant="accent" 
                   className="w-full md:w-auto text-lg px-12 py-4"
                   onClick={() => onNavigate('fila', event.id)}
                 >
                   Entrar na fila agora
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  className="w-full md:w-auto text-lg px-8 py-4"
+                  onClick={() => setIsQRModalOpen(true)}
+                >
+                  <QrCode className="w-5 h-5 mr-2" />
+                  QR Code
                 </Button>
                 <Button 
                   variant="secondary" 
@@ -247,7 +257,15 @@ export function Evento({ eventId, onNavigate }: EventoProps) {
                   O check-in abre no dia {event.dateFormatted} às {event.time.split(':')[0]}:00
                 </p>
               </Card>
-              <div className="flex flex-col md:flex-row gap-3 justify-center">
+              <div className="flex flex-col md:flex-row gap-3 justify-center flex-wrap">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setIsQRModalOpen(true)}
+                  className="w-full md:w-auto"
+                >
+                  <QrCode className="w-5 h-5 mr-2" />
+                  QR Code
+                </Button>
                 <Button 
                   variant="secondary" 
                   onClick={() => onNavigate('eventos')}
@@ -288,14 +306,33 @@ export function Evento({ eventId, onNavigate }: EventoProps) {
           )}
         </div>
 
-        {/* Queue Preview (only for active events) */}
-        {event.status === 'active' && (
-          <div className="mt-12">
-            <LiveQueue 
-              eventId={event.id}
-              onJoinQueue={() => onNavigate('fila', event.id)}
-            />
-          </div>
+        {/* Modal QR Code - evento ativo ou em breve */}
+        {(event.status === 'active' || event.status === 'upcoming') && (
+          <Modal
+            isOpen={isQRModalOpen}
+            onClose={() => setIsQRModalOpen(false)}
+            title="QR Code – Fila digital"
+          >
+            <div className="text-center space-y-4">
+              <p className="text-gray-400">
+                Escaneie para acessar a fila digital deste evento
+              </p>
+              <div className="bg-white p-6 rounded-lg inline-block">
+                <QRCodeGenerator
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  size={256}
+                  compact
+                />
+              </div>
+              <p className="text-gray-500 text-sm">
+                Link: {typeof window !== 'undefined' && `${window.location.origin}${(window.location.pathname || '/').replace(/\/?$/, '')}#fila/${event.id}`}
+              </p>
+              <Button variant="secondary" onClick={() => setIsQRModalOpen(false)}>
+                Fechar
+              </Button>
+            </div>
+          </Modal>
         )}
       </div>
     </div>
