@@ -19,16 +19,20 @@ export function QRCodeGenerator({ eventId, eventTitle = 'Evento', size = 300, co
 const url = `${base}#fila/${eventId}`;
 
   useEffect(() => {
-    if (canvasRef.current && eventId) {
-      QRCode.toCanvas(canvasRef.current, url, {
-        width: size,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-    }
+    if (!eventId || !url) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    // Garantir que o canvas tenha tamanho (evita QR em branco em modais)
+    canvas.width = size;
+    canvas.height = size;
+    QRCode.toCanvas(canvas, url, {
+      width: size,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    }).catch((err) => console.warn('QRCode draw error:', err));
   }, [url, eventId, size]);
 
   const handleDownload = () => {
@@ -61,7 +65,7 @@ const url = `${base}#fila/${eventId}`;
   if (compact) {
     return (
       <div className="bg-white p-4 rounded-lg inline-block">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} width={size} height={size} style={{ display: 'block' }} />
       </div>
     );
   }
